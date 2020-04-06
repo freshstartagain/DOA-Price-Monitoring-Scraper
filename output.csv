@@ -1,0 +1,63 @@
+"",,,Retail price per kilogram (PhP/kg)
+"",COMMODITY,SPECIFICATION(S),
+"",,,Prevailing Low High Average
+NFA RICE,,,
+NFA (Well milled),,kg,"#N/A 27.00 27.00 27.00"
+IMPORTED COMMERCIAL RICE,,,
+Special (Blue tag),,kg,"#N/A 45.00 52.00 48.75"
+Premium (Yellow tag),,kg,"#N/A 43.00 43.00 43.00"
+Well milled (White tag),,kg,42.00 38.00 48.00 43.33
+Regular milled (White tag),,kg,"#N/A 36.00 40.00 38.00"
+LOCAL COMMERCIAL RICE,,,
+Special (Blue tag),,kg,50.00 48.00 60.00 53.42
+Premium (Yellow tag),,kg,45.00 40.00 50.00 45.39
+Well milled (White tag),,kg,40.00 35.00 45.00 40.38
+Regular milled (White tag),,kg,36.00 32.00 40.00 36.05
+FISH,,,
+Bangus,,Medium (3-4pcs/kg),160.00 130.00 180.00 163.52
+Tilapia,,Medium (5-6pcs/kg),120.00 100.00 160.00 125.20
+Galunggong (Local),,Medium (12-14pcs/kg),180.00 120.00 200.00 160.00
+Galunggong (Imported),,Medium (12-14pcs/kg),"#N/A 0.00 0.00 #DIV/0!"
+Alumahan,,Medium (4-6pcs/kg),260.00 200.00 260.00 244.00
+LIVESTOCK & POULTRY PRODUCTS,,,
+Beef Rump,,Lean meat (Tapadera),360.00 300.00 380.00 351.11
+Beef Brisket,,Meat w/bones,320.00 220.00 320.00 283.75
+Pork Ham (Kasim),,Lean meat (Tapadera),190.00 180.00 220.00 196.21
+Pork Belly (Liempo),,Pork belly,230.00 200.00 260.00 231.67
+Whole Chicken,,Fully dressed,150.00 100.00 160.00 134.00
+Chicken Egg,,Medium size (per piece),6.50 6.00 7.00 6.59
+LOWLAND VEGETABLES,,,
+Ampalaya,,4-5 pcs/kg,100.00 80.00 140.00 104.29
+Sitao,,3-4 small bundles/kg,100.00 70.00 120.00 101.30
+Pechay (Native),,3-4 small bundles/kg,70.00 50.00 80.00 69.64
+Squash,,Suprema variety,40.00 30.00 60.00 38.39
+Eggplant,,3-4 small bundles/kg,100.00 80.00 140.00 108.28
+Tomato,,15-18 pcs/kg,50.00 35.00 70.00 49.82
+HIGHLAND VEGETABLES,,,
+Cabbage (Scorpio),,750 gm - 1 kg/head,80.00 70.00 100.00 86.48
+Carrots,,8-10 pcs/kg,80.00 70.00 120.00 81.61
+Habitchuelas (Baguio beans),,kg,100.00 70.00 120.00 93.46
+White Potato,,10-12 pcs/kg,120.00 80.00 140.00 109.46
+Pechay (Baguio),,kg,80.00 60.00 120.00 82.22
+Chayote,,kg,60.00 50.00 80.00 62.32
+SPICES,,,
+Red Onion,,13-15 pcs/kg,80.00 60.00 100.00 80.34
+Red Onion (Imported),,kg,"#N/A 0.00 0.00 #DIV/0!"
+White Onion,,kg,60.00 50.00 80.00 65.88
+White Onion (Imported),,kg,60.00 60.00 80.00 68.57
+Garlic (Imported),,kg,160.00 130.00 200.00 156.79
+Garlic (Native),,kg,"#N/A 0.00 0.00 #DIV/0!"
+Ginger,,kg,240.00 200.00 280.00 238.57
+Chilli (Labuyo),,kg,80.00 80.00 200.00 111.43
+FRUITS,,,
+Calamansi,,kg,120.00 100.00 200.00 129.63
+Banana (Lakatan),,8-10 pcs/kg,100.00 80.00 150.00 97.50
+Banana (Latundan),,10-12 pcs/kg,70.00 47.00 80.00 69.50
+Papaya,,2-3/pcs,60.00 30.00 60.00 51.11
+Mango (Carabao),,3-4 pcs/kg,160.00 120.00 220.00 158.33
+OTHER BASIC COMMODITIES,,,
+Sugar (Refined),,kg,50.00 45.00 60.00 52.44
+Sugar (Washed),,kg,44.00 40.00 55.00 44.60
+Sugar (Brown),,kg,42.00 30.00 55.00 42.96
+Cooking oil (Palm),,350 ml,20.00 17.00 30.00 21.38
+Cooking oil (Palm),,1L,50.00 46.00 80.00 53.43

@@ -103,7 +103,7 @@ def main():
     # for key, product in products.items():
     #     print(f"{key} : {product}")
 
-    with open("output.csv", newline="") as csvfile:
+    with open("price_monitoring_2020-04-06.csv", newline="") as csvfile:
         reader = csv.reader(csvfile, delimiter=",")
         for row in reader:
             try:
@@ -120,6 +120,8 @@ def main():
                 )
             except IndexError:
                 pass
+
+
 
 
 if __name__ == "__main__":

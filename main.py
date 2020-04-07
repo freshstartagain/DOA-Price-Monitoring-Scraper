@@ -100,26 +100,32 @@ def main():
         ],
     }
 
-    # for key, product in products.items():
-    #     print(f"{key} : {product}")
+    
 
     with open("price_monitoring_2020-04-06.csv", newline="") as csvfile:
         reader = csv.reader(csvfile, delimiter=",")
-        for row in reader:
-            try:
-                product_name = row[0]
-                specifications = row[2]
-                prices = row[3].split()
-                prevailing_price = prices[0] if prices[0] not in ['#N/A', '#DIV/0', '#DIV/0!'] else ''
-                low_price = prices[1] if prices[1] not in ['#N/A', '#DIV/0', '#DIV/0!'] else ''
-                high_price = prices[2] if prices[2] not in ['#N/A', '#DIV/0', '#DIV/0!'] else ''
-                average_price = prices[3] if prices[3] not in ['#N/A', '#DIV/0', '#DIV/0!'] else ''
+        with open('test.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["product_name", "specifications", "prevailing_price", "low_price", "high_price", "average_price", "type"])
+            for row in reader:
+                try:
+                    product_name = row[0]
+                    specifications = row[2]
+                    prices = row[3].split()
+                    prevailing_price = prices[0] if prices[0] not in ['#N/A', '#DIV/0', '#DIV/0!'] else ''
+                    low_price = prices[1] if prices[1] not in ['#N/A', '#DIV/0', '#DIV/0!'] else ''
+                    high_price = prices[2] if prices[2] not in ['#N/A', '#DIV/0', '#DIV/0!'] else ''
+                    average_price = prices[3] if prices[3] not in ['#N/A', '#DIV/0', '#DIV/0!'] else ''
 
-                print(
-                    f"Product Name:{product_name}, Specifications:{specifications}, Prevailing Price:{prevailing_price}, Low Price:{low_price}, High Price: {high_price}, Average Price: {average_price}"
-                )
-            except IndexError:
-                pass
+                    for key, product in products.items():
+                        if product_name in product:
+                            writer.writerow([product_name, specifications, prevailing_price, low_price, high_price, average_price, key])
+                            print(
+                                f"Product Name:{product_name}, Specifications:{specifications}, Prevailing Price:{prevailing_price}, Low Price:{low_price}, High Price: {high_price}, Average Price: {average_price}, Key: {key}"
+                            )
+
+                except IndexError:
+                    pass
 
 
 

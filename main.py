@@ -1,6 +1,9 @@
-import tabula
 import datetime
 import csv
+
+import tabula
+from bs4 import BeautifulSoup
+import requests
 
 
 class PriceMonitoring:

@@ -8,28 +8,7 @@ import requests
 
 
 class PriceMonitoring:
-    def __init__(self, pdf):
-        self.pdf = pdf
-
-    @staticmethod
-    def csv_file(self):
-        try:
-            tabula.convert_into(
-                self.pdf,
-                f"price_monitoring_{datetime.date.today()}",
-                output_format="csv",
-                pages="1",
-            )
-            return True
-        except:
-            return False
-
-    def clean_csv_file(self):
-        pass
-
-
-def clean_csv(filename, date):
-    products = {
+    PRODUCTS = {
         "nfa_rice": ["NFA (Well milled)",],
         "imported_commercial_rice": [
             "Special (Blue tag)",
@@ -103,106 +82,98 @@ def clean_csv(filename, date):
             "Cooking oil (Palm)",
         ],
     }
+    YEAR = datetime.datetime.now().year
+    PDF_DELIMITER = "-"
+    CSV_DELIMITER = ","
+    INVALID_PRICES = ["#N/A", "#DIV/0", "#DIV/0!", "NONE"]
 
-    with open(filename, newline="") as csvfile:
-        os.remove(filename)
-        reader = csv.reader(csvfile, delimiter=",")
-        with open(filename, "w", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow(
-                [
-                    "product_name",
-                    "specifications",
-                    "prevailing_price",
-                    "low_price",
-                    "high_price",
-                    "average_price",
-                    "type",
-                    "month",
-                    "date",
-                    "year",
-                ]
-            )
-            for row in reader:
-                try:
-                    product_name = row[0]
-                    specifications = row[2]
-                    prices = row[3].split()
-                    prevailing_price = (
-                        prices[0]
-                        if prices[0] not in ["#N/A", "#DIV/0", "#DIV/0!"]
-                        else ""
-                    )
-                    low_price = (
-                        prices[1]
-                        if prices[1] not in ["#N/A", "#DIV/0", "#DIV/0!"]
-                        else ""
-                    )
-                    high_price = (
-                        prices[2]
-                        if prices[2] not in ["#N/A", "#DIV/0", "#DIV/0!"]
-                        else ""
-                    )
-                    average_price = (
-                        prices[3]
-                        if prices[3] not in ["#N/A", "#DIV/0", "#DIV/0!"]
-                        else ""
-                    )
+    def __init__(self, doa_url):
+        self.doa_url = doa_url
 
-                    for key, product in products.items():
-                        if product_name in product:
-                            writer.writerow(
-                                [
-                                    product_name,
-                                    specifications,
-                                    prevailing_price,
-                                    low_price,
-                                    high_price,
-                                    average_price,
-                                    key,
-                                    date[0],
-                                    date[1],
-                                    date[2],
-                                ]
-                            )
-                            # print(
-                            #     f"Product Name:{product_name}, Specifications:{specifications}, Prevailing Price:{prevailing_price}, Low Price:{low_price}, High Price: {high_price}, Average Price: {average_price}, Key: {key}"
-                            # )
-                except IndexError:
-                    pass
+    def create_price(self, price):
+        return price if price not in self.INVALID_PRICES else ""
 
+    def doa_pdf_links(self):
+        response = requests.get(self.doa_url).text
+        soup = BeautifulSoup(response, "html.parser")
+        anchor_tags = soup.find("tbody").find_all("a")
 
-def scraper():
-    response = requests.get("http://www.da.gov.ph/price-monitoring/").text
-    soup = BeautifulSoup(response, "html.parser")
-    pdf_links = soup.find("tbody").find_all("a")
+        return [
+            anchor["href"]
+            for anchor in anchor_tags
+            if f"{self.YEAR}.pdf" in anchor["href"].split(self.PDF_DELIMITER)
+        ]
 
-    for pdf_link in pdf_links:
-        href = pdf_link["href"]
-        if "2020.pdf" in href.split("-"):
-            date = (
-                href.split("Monitoring")[1]
-                .replace(".pdf", "")
-                .replace("_", "")
-                .lstrip("-")
-            )
-            filename = f"product_prices_{date}.csv"
-            print(href, filename)
+    def convert_pdf_to_csv(self, pdf_link):
+        publish_date = (
+            pdf_link.split("Monitoring")[1]
+            .replace(".pdf", "")
+            .replace("_", "")
+            .lstrip("-")
+        )
 
-            pdf_to_csv(href, filename, date)
+        month, day, year = tuple(publish_date.split("-"))
+        filename = f"product_prices_{publish_date}.csv"
 
+        tabula.convert_into(pdf_link, filename, output_format="csv", pages="1")
 
-def pdf_to_csv(pdf_url, filename, date):
-    tabula.convert_into(
-        pdf_url, filename, output_format="csv", pages="1",
-    )
+        with open(filename, newline="") as csvfile:
+            os.remove(filename)
 
-    clean_csv(filename, date.split("-"))
+            reader = csv.reader(csvfile, delimiter=self.CSV_DELIMITER)
+            with open(filename, "w", newline="") as file:
+                writer = csv.writer(file)
+                writer.writerow(
+                    [
+                        "product_name",
+                        "specifications",
+                        "prevailing_price",
+                        "low_price",
+                        "high_price",
+                        "average_price",
+                        "type",
+                        "month",
+                        "date",
+                        "year",
+                    ]
+                )
+                for row in reader:
+                    try:
+                        product_name = row[0]
+                        specifications = row[2]
+                        prices = row[3].split()
+                        prevailing_price = self.create_price(prices[0])
+                        low_price = self.create_price(prices[1])
+                        high_price = self.create_price(prices[2])
+                        average_price = self.create_price(prices[3])
 
+                        for key, product in self.PRODUCTS.items():
+                            if product_name in product:
+                                writer.writerow(
+                                    [
+                                        product_name,
+                                        specifications,
+                                        prevailing_price,
+                                        low_price,
+                                        high_price,
+                                        average_price,
+                                        key,
+                                        month,
+                                        day,
+                                        year,
+                                    ]
+                                )
+                                # print(
+                                #     f"Product Name:{product_name}, Specifications:{specifications}, Prevailing Price:{prevailing_price}, Low Price:{low_price}, High Price: {high_price}, Average Price: {average_price}, Key: {key}, Month: {month}, Date: {date}, Year: {year}"
+                                # )
+                    except IndexError:
+                        pass
 
-def main():
-    scraper()
+    def generate(self):
+        for link in self.doa_pdf_links():
+            self.convert_pdf_to_csv(link)
 
 
 if __name__ == "__main__":
-    main()
+    price = PriceMonitoring("http://www.da.gov.ph/price-monitoring/")
+    price.generate()

@@ -109,12 +109,23 @@ class PriceMonitoring:
 
     def __init__(self, doa_url):
         self.doa_url = doa_url
-        
     
-    def database_process(self, product_data):
+    def __get_table_column_id(self, table, column_value, connection, cursor):
+        cursor.execute(f"SELECT * FROM {table} WHERE name='{column_value}';")
+        column = cursor.fetchone()
+        if column:
+           return column['id']
+        else:
+            cursor.execute(f"INSERT INTO {table} (name) VALUES ('{column_value}');")
+            connection.commit()
+            cursor.execute(f"SELECT * FROM {table} WHERE name='{column_value}';")
+            column = cursor.fetchone()
+            return column['id']
+    
+    def __database_process(self, product):
         db_connection = mysql.connect(host = self.DB_HOST, user = self.DB_USERNAME, password = self.DB_PASSWORD)
-        db_cursor = db_connection.cursor()
-
+        db_cursor = db_connection.cursor(dictionary=True)
+        
         try:
             db_cursor.execute(self.CREATE_DATABASE_QUERY)
             db_cursor.execute(self.USE_DATABASE_QUERY)
@@ -123,6 +134,14 @@ class PriceMonitoring:
             db_cursor.execute(self.CREATE_PRODUCT_TABLE_QUERY)
         except mysql.Error as error:
             print(f"Something went wrong: {error}")
+        
+        specification_id = self.__get_table_column_id("specification", product['specification'], db_connection, db_cursor)
+        product_id = self.__get_table_column_id("type", product['type'], db_connection, db_cursor)
+
+
+        #check if the product and the date is already existing
+        #execute the insert
+        
             
 
     def __create_price(self, price):
@@ -148,61 +167,72 @@ class PriceMonitoring:
         )
 
         month, day, year = tuple(publish_date.split("-"))
+
+        if len(month) == 2:
+            raw_date = datetime.datetime.strptime(f"{day} {month}, {year}", '%d %m, %Y')
+            date = raw_date.strftime('%Y-%m-%d')
+        elif len(month) == 3:
+            raw_date = datetime.datetime.strptime(f"{day} {month}, {year}", '%d %b, %Y')
+            date = raw_date.strftime('%Y-%m-%d')
+        elif len(month) > 3:
+            raw_date = datetime.datetime.strptime(f"{day} {month}, {year}", '%d %B, %Y')
+            date = raw_date.strftime('%Y-%m-%d')
+
+        # try:
+        #     raw_date = datetime.datetime.strptime(f"{day} {month}, {year}", '%d %B, %Y')
+        #     date = raw_date.strftime('%Y-%m-%d')
+        # except ValueError:
+        #     if()
+        #     raw_date = datetime.datetime.strptime(f"{day} {month}, {year}", '%d %m, %Y')
+        #     raw_date = datetime.datetime.strptime(f"{day} {month}, {year}", '%d %b, %Y')
+        #     date = raw_date.strftime('%Y-%m-%d')
+
         filename = f"product_prices_{publish_date}.csv"
 
         tabula.convert_into(pdf_link, filename, output_format="csv", pages="1")
 
         with open(filename, newline="") as csvfile:
             os.remove(filename)
-
             reader = csv.reader(csvfile, delimiter=self.CSV_DELIMITER)
-            with open(filename, "w", newline="") as file:
-                writer = csv.writer(file)
-                writer.writerow(
-                    [
-                        "product_name",
-                        "specifications",
-                        "prevailing_price",
-                        "low_price",
-                        "high_price",
-                        "average_price",
-                        "type",
-                        "month",
-                        "date",
-                        "year",
-                    ]
-                )
-                for row in reader:
-                    try:
-                        product_name = row[0]
-                        specifications = row[2]
-                        prices = row[3].split()
-                        prevailing_price = self.__create_price(prices[0])
-                        low_price = self.__create_price(prices[1])
-                        high_price = self.__create_price(prices[2])
-                        average_price = self.__create_price(prices[3])
 
-                        for key, product in self.PRODUCTS.items():
-                            if product_name in product:
-                                writer.writerow(
-                                    [
-                                        product_name,
-                                        specifications,
-                                        prevailing_price,
-                                        low_price,
-                                        high_price,
-                                        average_price,
-                                        key,
-                                        month,
-                                        day,
-                                        year,
-                                    ]
-                                )
-                                # print(
-                                #     f"Product Name:{product_name}, Specifications:{specifications}, Prevailing Price:{prevailing_price}, Low Price:{low_price}, High Price: {high_price}, Average Price: {average_price}, Key: {key}, Month: {month}, Date: {date}, Year: {year}"
-                                # )
-                    except IndexError:
-                        pass
+            for row in reader:
+                try:
+                    product_name = row[0]
+                    specifications = row[2]
+                    prices = row[3].split()
+                    prevailing_price = self.__create_price(prices[0])
+                    low_price = self.__create_price(prices[1])
+                    high_price = self.__create_price(prices[2])
+                    average_price = self.__create_price(prices[3])
+
+                    for key, product in self.PRODUCTS.items():
+                        if product_name in product:  
+                            self.__database_process({
+                                'name':product_name,
+                                'specification':specifications,
+                                'prevailing_price':prevailing_price,
+                                'low_price':low_price,
+                                'high_price':high_price,
+                                'average_price':average_price,
+                                'type':key,
+                                'date':date,
+                            })
+                                #     product_name,
+                                #     specifications,
+                                #     prevailing_price,
+                                #     low_price,
+                                #     high_price,
+                                #     average_price,
+                                #     key,
+                                #     month,
+                                #     day,
+                                #     year,
+                                # ]
+                            # print(
+                            #     f"Product Name:{product_name}, Specifications:{specifications}, Prevailing Price:{prevailing_price}, Low Price:{low_price}, High Price: {high_price}, Average Price: {average_price}, Key: {key}, Month: {month}, Date: {date}, Year: {year}"
+                            # )
+                except IndexError:
+                    pass
 
     def generate(self):
         for link in self.doa_pdf_links():
@@ -211,7 +241,7 @@ class PriceMonitoring:
 
 if __name__ == "__main__":
     price = PriceMonitoring("http://www.da.gov.ph/price-monitoring/")
-    # price.generate()
-    price.database_process()
+    price.generate()
+    # price.database_process()
     
 

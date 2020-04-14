@@ -1,10 +1,18 @@
 import datetime
 import csv
 import os
+from pathlib import Path
+
 
 import tabula
 from bs4 import BeautifulSoup
 import requests
+import mysql.connector as mysql
+from dotenv import load_dotenv
+
+
+ENV_PATH = Path('.') / '.env'
+load_dotenv(dotenv_path=ENV_PATH)  
 
 
 class PriceMonitoring:
@@ -82,15 +90,42 @@ class PriceMonitoring:
             "Cooking oil (Palm)",
         ],
     }
+
     YEAR = datetime.datetime.now().year
     PDF_DELIMITER = "-"
     CSV_DELIMITER = ","
     INVALID_PRICES = ["#N/A", "#DIV/0", "#DIV/0!", "NONE"]
+    DB_HOST = os.getenv('HOST')
+    DB_USERNAME = os.getenv('USER')
+    DB_PASSWORD = os.getenv('PASSWORD')
+    DB_NAME = os.getenv('NAME')
+    CREATE_DATABASE_QUERY = "CREATE DATABASE IF NOT EXISTS doa_products;"
+    USE_DATABASE_QUERY = f"USE doa_products;"
+    CREATE_SPECIFICATION_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS specification(id INT AUTO_INCREMENT, name VARCHAR(200), PRIMARY KEY(id));"
+    CREATE_TYPE_TABLE_QUERY = "CREATE TABLE IF NOT EXISTS type(id INT AUTO_INCREMENT, name VARCHAR(200), PRIMARY KEY(id));"
+    CREATE_PRODUCT_TABLE_QUERY = "CREATE TABLE  IF NOT EXISTS product(id INT AUTO_INCREMENT, name VARCHAR(200), prevailing_price DECIMAL(10,2), low_price DECIMAL(10,2), high_price DECIMAL(10,2), average_price DECIMAL(10,2), issue_date DATE, specification_id INT, type_id INT, PRIMARY KEY(id), FOREIGN KEY (specification_id) REFERENCES specification(id), FOREIGN KEY (type_id) REFERENCES type(id));"
+
+    
 
     def __init__(self, doa_url):
         self.doa_url = doa_url
+        
+    
+    def database_process(self, product_data):
+        db_connection = mysql.connect(host = self.DB_HOST, user = self.DB_USERNAME, password = self.DB_PASSWORD)
+        db_cursor = db_connection.cursor()
 
-    def create_price(self, price):
+        try:
+            db_cursor.execute(self.CREATE_DATABASE_QUERY)
+            db_cursor.execute(self.USE_DATABASE_QUERY)
+            db_cursor.execute(self.CREATE_SPECIFICATION_TABLE_QUERY)
+            db_cursor.execute(self.CREATE_TYPE_TABLE_QUERY)
+            db_cursor.execute(self.CREATE_PRODUCT_TABLE_QUERY)
+        except mysql.Error as error:
+            print(f"Something went wrong: {error}")
+            
+
+    def __create_price(self, price):
         return price if price not in self.INVALID_PRICES else ""
 
     def doa_pdf_links(self):
@@ -142,10 +177,10 @@ class PriceMonitoring:
                         product_name = row[0]
                         specifications = row[2]
                         prices = row[3].split()
-                        prevailing_price = self.create_price(prices[0])
-                        low_price = self.create_price(prices[1])
-                        high_price = self.create_price(prices[2])
-                        average_price = self.create_price(prices[3])
+                        prevailing_price = self.__create_price(prices[0])
+                        low_price = self.__create_price(prices[1])
+                        high_price = self.__create_price(prices[2])
+                        average_price = self.__create_price(prices[3])
 
                         for key, product in self.PRODUCTS.items():
                             if product_name in product:
@@ -176,4 +211,7 @@ class PriceMonitoring:
 
 if __name__ == "__main__":
     price = PriceMonitoring("http://www.da.gov.ph/price-monitoring/")
-    price.generate()
+    # price.generate()
+    price.database_process()
+    
+

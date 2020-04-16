@@ -2,6 +2,7 @@ import datetime
 import csv
 import os
 from pathlib import Path
+import logging
 
 
 import tabula
@@ -13,6 +14,23 @@ from dotenv import load_dotenv
 
 ENV_PATH = Path('.') / '.env'
 load_dotenv(dotenv_path=ENV_PATH)  
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter('%(asctime)s:%(name)s:%(message)s')
+
+file_handler = logging.FileHandler('product.log')
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(formatter)
+
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
+
+
 
 
 class PriceMonitoring:
@@ -139,7 +157,8 @@ class PriceMonitoring:
         else:
             cursor.execute(f"INSERT INTO product (name, prevailing_price, low_price, high_price, average_price, issue_date, specification_id, type_id) VALUES ('{name}', '{prevailing_price}', '{low_price}', '{high_price}', '{average_price}', '{issue_date}', '{specification_id}', '{type_id}');")
             connection.commit()
-            print(f"Done adding {name}:{issue_date}")
+
+            logger.info(f"Done adding {name}:{issue_date} to database..")
 
     
     def __database_process(self, product):

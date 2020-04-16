@@ -121,6 +121,26 @@ class PriceMonitoring:
             cursor.execute(f"SELECT * FROM {table} WHERE name='{column_value}';")
             column = cursor.fetchone()
             return column['id']
+
+    def __seed_product_table(self, product, connection, cursor):
+        name = product['name']
+        prevailing_price = product['prevailing_price']
+        low_price = product['low_price']
+        high_price = product['high_price']
+        average_price = product['average_price']
+        issue_date = product['issue_date']
+        specification_id = product['specification_id']
+        type_id = product['type_id']
+
+        cursor.execute(f"SELECT * FROM product WHERE name='{name}' AND issue_date='{issue_date}';")
+        product = cursor.fetchone()
+        if product:
+            pass
+        else:
+            cursor.execute(f"INSERT INTO product (name, prevailing_price, low_price, high_price, average_price, issue_date, specification_id, type_id) VALUES ('{name}', '{prevailing_price}', '{low_price}', '{high_price}', '{average_price}', '{issue_date}', '{specification_id}', '{type_id}');")
+            connection.commit()
+            print(f"Done adding {name}:{issue_date}")
+
     
     def __database_process(self, product):
         db_connection = mysql.connect(host = self.DB_HOST, user = self.DB_USERNAME, password = self.DB_PASSWORD)
@@ -136,16 +156,23 @@ class PriceMonitoring:
             print(f"Something went wrong: {error}")
         
         specification_id = self.__get_table_column_id("specification", product['specification'], db_connection, db_cursor)
-        product_id = self.__get_table_column_id("type", product['type'], db_connection, db_cursor)
+        type_id = self.__get_table_column_id("type", product['type'], db_connection, db_cursor)
 
+        final_product_data = {
+            "name":product["name"],
+            "prevailing_price":product["prevailing_price"],
+            "low_price":product["low_price"],
+            "high_price":product["high_price"],
+            "average_price":product["average_price"],
+            "issue_date":product["date"],
+            "specification_id":specification_id,
+            "type_id":type_id,
+        }
 
-        #check if the product and the date is already existing
-        #execute the insert
-        
-            
+        self.__seed_product_table(final_product_data, db_connection, db_cursor)
 
     def __create_price(self, price):
-        return price if price not in self.INVALID_PRICES else ""
+        return price if price not in self.INVALID_PRICES else 0
 
     def doa_pdf_links(self):
         response = requests.get(self.doa_url).text
@@ -178,15 +205,6 @@ class PriceMonitoring:
             raw_date = datetime.datetime.strptime(f"{day} {month}, {year}", '%d %B, %Y')
             date = raw_date.strftime('%Y-%m-%d')
 
-        # try:
-        #     raw_date = datetime.datetime.strptime(f"{day} {month}, {year}", '%d %B, %Y')
-        #     date = raw_date.strftime('%Y-%m-%d')
-        # except ValueError:
-        #     if()
-        #     raw_date = datetime.datetime.strptime(f"{day} {month}, {year}", '%d %m, %Y')
-        #     raw_date = datetime.datetime.strptime(f"{day} {month}, {year}", '%d %b, %Y')
-        #     date = raw_date.strftime('%Y-%m-%d')
-
         filename = f"product_prices_{publish_date}.csv"
 
         tabula.convert_into(pdf_link, filename, output_format="csv", pages="1")
@@ -200,7 +218,7 @@ class PriceMonitoring:
                     product_name = row[0]
                     specifications = row[2]
                     prices = row[3].split()
-                    prevailing_price = self.__create_price(prices[0])
+                    prevailing_price = self.__create_price(prices[0]) 
                     low_price = self.__create_price(prices[1])
                     high_price = self.__create_price(prices[2])
                     average_price = self.__create_price(prices[3])
@@ -217,20 +235,6 @@ class PriceMonitoring:
                                 'type':key,
                                 'date':date,
                             })
-                                #     product_name,
-                                #     specifications,
-                                #     prevailing_price,
-                                #     low_price,
-                                #     high_price,
-                                #     average_price,
-                                #     key,
-                                #     month,
-                                #     day,
-                                #     year,
-                                # ]
-                            # print(
-                            #     f"Product Name:{product_name}, Specifications:{specifications}, Prevailing Price:{prevailing_price}, Low Price:{low_price}, High Price: {high_price}, Average Price: {average_price}, Key: {key}, Month: {month}, Date: {date}, Year: {year}"
-                            # )
                 except IndexError:
                     pass
 
@@ -242,6 +246,5 @@ class PriceMonitoring:
 if __name__ == "__main__":
     price = PriceMonitoring("http://www.da.gov.ph/price-monitoring/")
     price.generate()
-    # price.database_process()
     
 
